@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Katana Products</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7; }
+    h1 { color: #333; }
+    .controls input, .controls select, button { padding: 8px; margin: 4px; }
+    table { border-collapse: collapse; margin-top: 20px; width: 100%; background: #fff; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    .actions button { margin: 0 3px; }
+    .search-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <h1>📦 Katana Products</h1>
+
+  <div class="controls">
+    <input id="name" placeholder="Product name">
+    <input id="price" placeholder="Price" type="number">
+    <button id="addBtn">Add</button>
+  </div>
+
+  <div class="search-row">
+    <input id="search" placeholder="Search by name, id or price..." style="flex:1">
+    <input id="minPrice" placeholder="min price" type="number" style="width:110px">
+    <input id="maxPrice" placeholder="max price" type="number" style="width:110px">
+    <select id="sort">
+      <option value="">Sort</option>
+      <option value="price_asc">Price ↑</option>
+      <option value="price_desc">Price ↓</option>
+      <option value="name_asc">Name A→Z</option>
+      <option value="name_desc">Name Z→A</option>
+    </select>
+    <button id="clearFilters">Clear</button>
+  </div>
+
+  <table id="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Price ($)</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+      <tr><td colspan="4" id="resultsCount" style="text-align:left; padding:8px;"></td></tr>
+    </tfoot>
+  </table>
+
+  <script>
+    const API = "/api/items";
+
+    // debounce helper
+    function debounce(fn, wait) {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), wait);
+      };
+    }
+
+    // build query string from filters
+    function buildQuery() {
+      const q = document.getElementById("search").value.trim();
+      const minPrice = document.getElementById("minPrice").value;
+      const maxPrice = document.getElementById("maxPrice").value;
+      const sort = document.getElementById("sort").value;
+      const params = new URLSearchParams();
+      if (q) params.append("q", q);
+      if (minPrice) params.append("minPrice", minPrice);
+      if (maxPrice) params.append("maxPrice", maxPrice);
+      if (sort) params.append("sort", sort);
+      return params.toString() ? `?${params.toString()}` : "";
+    }
+
+    async function loadItems() {
+      const q = buildQuery();
+      const res = await fetch(API + q);
+      const items = await res.json();
+      render(items);
+    }
+
+    function render(items) {
+      const tbody = document.querySelector("tbody");
+      tbody.innerHTML = "";
+      items.forEach(item => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.id}</td>
+            <td><input value="${escapeHtml(item.name)}" id="name-${item.id}"></td>
+            <td><input value="${item.price}" id="price-${item.id}" type="number"></td>
+            <td class="actions">
+              <button onclick="updateItem(${item.id})">💾 Save</button>
+              <button onclick="deleteItem(${item.id})">❌ Delete</button>
+            </td>
+          </tr>`;
+      });
+      document.getElementById("resultsCount").textContent = `Results: ${items.length}`;
+    }
+
+    // simple escape to avoid breaking HTML attribute values
+    function escapeHtml(text) {
+      return String(text).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // CREATE
+    async function addItem() {
+      const nameEl = document.getElementById("name");
+      const priceEl = document.getElementById("price");
+      const name = nameEl.value.trim();
+      const price = parseFloat(priceEl.value);
+      if (!name || isNaN(price)) return alert("Fill name and price!");
+      await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, price })
+      });
+      nameEl.value = "";
+      priceEl.value = "";
+      loadItems();
+    }
+
+    // UPDATE
+    async function updateItem(id) {
+      const name = document.getElementById(`name-${id}`).value;
+      const price = parseFloat(document.getElementById(`price-${id}`).value);
+      if (!name || isNaN(price)) return alert("Fill fields!");
+      await fetch(`${API}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, price })
+      });
+      loadItems();
+    }
+
+    // DELETE
+    async function deleteItem(id) {
+      if (!confirm("Delete this item?")) return;
+      await fetch(`${API}/${id}`, { method: "DELETE" });
+      loadItems();
+    }
+
+    // Events
+    document.getElementById("addBtn").addEventListener("click", addItem);
+    document.getElementById("clearFilters").addEventListener("click", () => {
+      document.getElementById("search").value = "";
+      document.getElementById("minPrice").value = "";
+      document.getElementById("maxPrice").value = "";
+      document.getElementById("sort").value = "";
+      loadItems();
+    });
+
+    // debounce search + filters
+    const debouncedLoad = debounce(loadItems, 300);
+    document.getElementById("search").addEventListener("input", debouncedLoad);
+    document.getElementById("minPrice").addEventListener("input", debouncedLoad);
+    document.getElementById("maxPrice").addEventListener("input", debouncedLoad);
+    document.getElementById("sort").addEventListener("change", loadItems);
+
+    // initial load
+    loadItems();
+  </script>
+</body>
+</html>
