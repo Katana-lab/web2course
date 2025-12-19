@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Редагувати банк</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Редагування банку</h1>
+
+  <form id="editForm">
+    <label>Назва банку:</label><br>
+    <input type="text" id="bankName" required minlength="2"><br><br>
+
+    <label>Кількість клієнтів:</label><br>
+    <input type="number" id="bankClients" required min="1"><br><br>
+
+    <label>Кількість кредитів:</label><br>
+    <input type="number" id="bankCredits" required min="0"><br><br>
+
+    <button type="submit">Зберегти зміни</button>
+    <button type="button" onclick="window.location.href='index.html'">Назад</button>
+  </form>
+
+  <script>
+    const banks = JSON.parse(localStorage.getItem("banks")) || [];
+    const bank = banks[0] || { name: "", clients: "", credits: "" };
+
+    document.querySelector("#bankName").value = bank.name;
+    document.querySelector("#bankClients").value = bank.clients;
+    document.querySelector("#bankCredits").value = bank.credits;
+
+    document.querySelector("#editForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      bank.name = document.querySelector("#bankName").value.trim();
+      bank.clients = parseInt(document.querySelector("#bankClients").value);
+      bank.credits = parseInt(document.querySelector("#bankCredits").value);
+
+      if (bank.name === "" || bank.clients <= 0 || bank.credits < 0) {
+        alert("Введіть правильні дані!");
+        return;
+      }
+
+      banks[0] = bank;
+      localStorage.setItem("banks", JSON.stringify(banks));
+      alert("Банк успішно оновлено!");
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>

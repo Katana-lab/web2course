@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Банки України</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Список банків</h1>
+
+  <div class="controls">
+    <input type="text" id="searchInput" placeholder="Пошук за назвою банку...">
+    <select id="sortSelect">
+      <option value="">Сортувати за...</option>
+      <option value="clients">Кількістю клієнтів</option>
+      <option value="credits">Кількістю кредитів</option>
+    </select>
+    <button onclick="window.location.href='create.html'">➕ Додати банк</button>
+  </div>
+
+  <table id="banksTable">
+    <thead>
+      <tr>
+        <th>Назва</th>
+        <th>Клієнти</th>
+        <th>Кредити</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h3 id="totalCredits"></h3>
+
+  <script src="app.js"></script>
+</body>
+</html>

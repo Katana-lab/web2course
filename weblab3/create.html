@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Додати новий банк</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Додати банк</h1>
+
+  <form id="createForm">
+    <label>Назва банку:</label><br>
+    <input type="text" id="bankName" required minlength="2"><br><br>
+
+    <label>Кількість клієнтів:</label><br>
+    <input type="number" id="bankClients" required min="1"><br><br>
+
+    <label>Кількість кредитів:</label><br>
+    <input type="number" id="bankCredits" required min="0"><br><br>
+
+    <button type="submit">Додати банк</button>
+    <button type="button" onclick="window.location.href='index.html'">Назад</button>
+  </form>
+
+  <script>
+    document.querySelector("#createForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const name = document.querySelector("#bankName").value.trim();
+      const clients = parseInt(document.querySelector("#bankClients").value);
+      const credits = parseInt(document.querySelector("#bankCredits").value);
+
+      if (name === "" || clients <= 0 || credits < 0) {
+        alert("Будь ласка, введіть коректні дані!");
+        return;
+      }
+
+      const banks = JSON.parse(localStorage.getItem("banks")) || [];
+      banks.push({ name, clients, credits });
+      localStorage.setItem("banks", JSON.stringify(banks));
+
+      alert("Банк успішно додано!");
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>
